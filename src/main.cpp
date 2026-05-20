@@ -4,7 +4,7 @@
 
 int main()
 {
-    // Parity 3-bit: output = 1, gdy liczba jedynek jest nieparzysta
+    // Parity 3-bit: output = 1 gdy liczba jedynek jest nieparzysta
     Network net(3, {6, 1}); // wejscie 3 -> ukryta 6 -> wyjscie 1
 
     std::vector<std::vector<double>> inputs = {
