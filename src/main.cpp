@@ -1,6 +1,10 @@
 #include <iostream>
+#include <ostream>
 #include <vector>
 #include "../include/Network.hpp"
+#include "Config.hpp"
+#include "Trainer.hpp"
+#include <iomanip>
 
 int main()
 {
@@ -29,15 +33,11 @@ int main()
         {1.0}
     };
 
-    int epochs = 50000;
+    Config config;
+    Trainer trainer(config);
+    trainer.run(net, inputs, targets, config);
 
-    for (int epoch = 0; epoch < epochs; ++epoch)
-    {
-        for (size_t i = 0; i < inputs.size(); ++i)
-        {
-            net.train(inputs[i], targets[i]);
-        }
-    }
+    std::cout << std::defaultfloat << std::setprecision(6);
 
     // test
     for (size_t i = 0; i < inputs.size(); ++i)
