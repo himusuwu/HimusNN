@@ -41,7 +41,7 @@ void Progress::update(int epoch, int epochs, double last_mse, double last_acc, s
 			<< "\r" << bar << " "
 			<< "mse=" << last_mse << " "
 			<< std::setprecision(3)
-			<< "acc=" << " "
+			<< "acc=" << last_acc << " "
 			<< std::setprecision(2)
 			<< "eta=" << last_eta_s.count() << "s "
 			<< "ep=" << last_epoch_ms.count() << "ms"
