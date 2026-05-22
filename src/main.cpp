@@ -5,11 +5,27 @@
 #include "Config.hpp"
 #include "Trainer.hpp"
 #include <iomanip>
+#include <algorithm>
 
 int main()
 {
+    int epochs = 50000;
+    int metric_interval = std::max(1, epochs / 100);
+
+    Config config
+    {
+        epochs, 
+        0, 
+        metric_interval, 
+        10,
+        40,
+        20,
+        true,
+        0.5
+    };
+
     // Parity 3-bit: output = 1 gdy liczba jedynek jest nieparzysta
-    Network net(3, {6, 1}); // wejscie 3 -> ukryta 6 -> wyjscie 1
+    Network net(3, {6, 1}, config.learning_rate); // wejscie 3 -> ukryta 6 -> wyjscie 1
 
     std::vector<std::vector<double>> inputs = {
         {0.0, 0.0, 0.0},
@@ -33,7 +49,6 @@ int main()
         {1.0}
     };
 
-    Config config;
     Trainer trainer(config);
     trainer.run(net, inputs, targets, config);
 

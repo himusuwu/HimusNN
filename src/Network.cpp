@@ -1,7 +1,7 @@
 #include "../include/Network.hpp"
 #include <vector>
 
-Network::Network(int input_size, std::vector<int> layers_sizes)
+Network::Network(int input_size, std::vector<int> layers_sizes, double learning_rate) : learning_rate(learning_rate)
 {
 	int prev_size = input_size;
 

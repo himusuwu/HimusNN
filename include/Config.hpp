@@ -2,22 +2,22 @@
 #define CONFIG_HPP
 
 #include <vector>
-#include <algorithm>
 
 struct Config 
 {
-	int epochs = 50000;
+	int epochs;
 	int log_interval;
-	int metric_interval = std::max(1, epochs / 100);
-	int status_interval = 10;
+	int metric_interval;
+	int status_interval;
 
-	size_t bar_width = 40;
-	size_t window_size = 20;
+	size_t bar_width;
+	size_t window_size;
 
-	std::vector<int> layers;
+	bool use_color;
+
 	double learning_rate;
 
-	bool use_color = true;
+	std::vector<int> layers;
 };
 
 #endif
