@@ -52,8 +52,3 @@ The program trains a `3 -> 6 -> 1` network for 50_000 epochs and prints predicti
 - `src/` - implementations and the example in `main.cpp`
 - `include/` - class headers: `Neuron`, `Layer`, `Network`
 - `CMakeLists.txt` - build configuration
-
-## Notes
-
-- The learning rate is set to `0.5` in `Network`.
-- Training data and epoch count are in `main.cpp`.
