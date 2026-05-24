@@ -5,6 +5,8 @@ Simple multi-layer perceptron (MLP) in C++ with manual backprop. The example tra
 ## Features
 
 - Implementation of neurons, layers, and network (forward + backprop)
+- Modular activations and loss functions (configurable)
+- Training progress bar with metrics and ETA
 - Training example on binary data
 - Build with CMake
 
@@ -49,11 +51,11 @@ The program trains a `3 -> 6 -> 1` network for 50_000 epochs and prints predicti
 
 ## Structure
 
-- `src/` - implementations and the example in `main.cpp`
-- `include/` - class headers: `Neuron`, `Layer`, `Network`
+- `src/` - implementations and training loop
+- `include/` - class headers (`Neuron`, `Layer`, `Network`, `Trainer`, `Progress`, `Timing`, `Metric`, `Config`)
 - `CMakeLists.txt` - build configuration
 
 ## Notes
 
-- The learning rate is set to `0.5` in `Network`.
-- Training data and epoch count are in `main.cpp`.
+- Training settings (epochs, intervals, learning rate, activations, loss) are defined in `Config`.
+- The example uses a 3-bit parity dataset in `main.cpp`.

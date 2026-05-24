@@ -2,11 +2,11 @@
 #include <cstddef>
 #include <vector>
 
-Layer::Layer(int neurons_count, int input_size)
+Layer::Layer(int neurons_count, int input_size, ActivationType activation, double leaky_alpha, double elu_alpha, double huber_delta)
 {
 	for(size_t i = 0; i < neurons_count; i++)
 	{
-		neurons.push_back(Neuron(input_size));
+		neurons.push_back(Neuron(input_size, activation, leaky_alpha, elu_alpha, huber_delta));
 	}
 }
 

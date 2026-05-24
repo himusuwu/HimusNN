@@ -1,13 +1,13 @@
 #include "../include/Network.hpp"
 #include <vector>
 
-Network::Network(int input_size, std::vector<int> layers_sizes, double learning_rate) : learning_rate(learning_rate)
+Network::Network(int input_size, std::vector<int> layers_sizes, double learning_rate, ActivationType activation, LossType loss, double leaky_alpha, double elu_alpha, double huber_delta) : learning_rate(learning_rate), activation(activation), loss(loss)
 {
 	int prev_size = input_size;
 
 	for(int& size : layers_sizes)
 	{
-		layers.push_back(Layer(size, prev_size));
+		layers.push_back(Layer(size, prev_size, activation, leaky_alpha, elu_alpha, huber_delta));
 		prev_size = size;
 	}
 }
@@ -39,7 +39,7 @@ void Network::train(std::vector<double> inputs, std::vector<double> targets)
 			double target = targets[i];
 			double output = neurons[i].get_last_output();
 
-			neurons[i].calculate_out_delta(target, output);
+			neurons[i].calculate_out_delta(target, output, loss);
 		}
 	}
 	else 

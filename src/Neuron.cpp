@@ -1,8 +1,11 @@
 #include "../include/Neuron.hpp"
+#include "Config.hpp"
+#include <cstdlib>
 #include <random>
+#include <stdexcept>
 #include <vector>
 
-Neuron::Neuron(int input_size)
+Neuron::Neuron(int input_size, ActivationType activation, double leaky_alpha, double elu_alpha, double huber_delta) : activation(activation), leaky_alpha(leaky_alpha), elu_alpha(elu_alpha), huber_delta(huber_delta)
 {
 	std::mt19937 rng(std::random_device{}());
 	std::uniform_real_distribution<double> dist(-0.5, 0.5);
@@ -39,21 +42,64 @@ double Neuron::calculate(std::vector<double> inputs)
 		sum += bias;
 	}
 
-	last_output = activation(sum);
+	last_output = activate(sum);
 
-	return activation(sum);
+	return activate(sum);
 }
 
-double Neuron::calculate_out_delta(double target, double output)
+double Neuron::calculate_out_delta(double target, double output, LossType loss)
 {
-	delta = (target - output) * derivative(output);
+	switch (loss) 
+	{
+		case LossType::MSE:
+		{
+			delta = (target - output) * activateDerivative(output);
+			break;
+		}
+		case LossType::BCE:
+		{
+			if(activation == ActivationType::Sigmoid)
+			{
+				delta = (target - output);
+			}
+			else
+			{
+				throw std::invalid_argument
+				(
+					"Model configuration error: Binary Cross Entropy (BCE) loss requires "
+					"a Sigmoid activation function on the final layer to ensure outputs "
+					"fall within the [0, 1] range."
+				);
+			}
+			break;
+		}
+		case LossType::MAE:
+		{
+			double e = output - target;
+			double grad = (e > 0) ? 1.0 : (e < 0) ? -1.0 : 0.0;
+
+			delta = -grad * activateDerivative(output);
+			break;
+		}
+		case LossType::Huber:
+		{
+			double e = output - target;
+			double abs_e = std::abs(e);
+			double grad = (abs_e <= huber_delta) ? e : huber_delta * ((e > 0) ? 1.0 : -1.0);
+
+			delta = -grad * activateDerivative(output);
+			break;
+		}
+		case LossType::CrossEntropy: 			// TODO CrossEntropy
+			break;
+	}
 
 	return delta;
 }
 
 double Neuron::calculate_hidden_delta(double sum)
 {
-	delta = sum * derivative(last_output);
+	delta = sum * activateDerivative(last_output);
 
 	return delta;
 }
