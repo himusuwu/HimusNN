@@ -1,10 +1,19 @@
 #include "Trainer.hpp"
+
 #include "Config.hpp"
+
 #include <chrono>
 
-void Trainer::run(Network& net, const std::vector<std::vector<double>>& inputs, const std::vector<std::vector<double>>& targets, const Config& config)
+void Trainer::run(
+    Network& net,
+    const std::vector<std::vector<double>>& inputs,
+    const std::vector<std::vector<double>>& targets,
+    const std::vector<std::vector<double>>& val_inputs,
+    const std::vector<std::vector<double>>& val_targets,
+    const Config& config
+)
 {
-	for (int epoch = 0; epoch < config.epochs; ++epoch)
+    for (int epoch = 0; epoch < config.epochs; ++epoch)
     {
         auto start_epoch = std::chrono::steady_clock::now();
 
@@ -15,23 +24,26 @@ void Trainer::run(Network& net, const std::vector<std::vector<double>>& inputs, 
 
         auto stop_epoch = std::chrono::steady_clock::now();
 
-		std::chrono::steady_clock::duration epoch_time = stop_epoch - start_epoch;
+        std::chrono::steady_clock::duration epoch_time = stop_epoch - start_epoch;
 
-		if(epoch % config.status_interval == 0)
+        if (epoch % config.status_interval == 0)
         {
             Timing::TimingResult t = timing.update(epoch_time, config.epochs - epoch - 1);
-			last_eta_s = t.eta;
-			last_epoch_ms = t.epoch_ms;
+            last_eta_s = t.eta;
+            last_epoch_ms = t.epoch_ms;
         }
 
-		if(epoch % config.metric_interval == 0)
-		{
-			last_mse = metric.mse(net, inputs, targets);
-			last_acc = metric.accuracy(net, inputs, targets);
-		}
+        if (epoch % config.metric_interval == 0)
+        {
+            last_mse = metric.mse(net, inputs, targets);
+            last_acc = metric.accuracy(net, inputs, targets);
 
-		progress.update(epoch, config.epochs, last_mse,last_acc, last_eta_s, last_epoch_ms);
+            val_mse = metric.mse(net, val_inputs, val_targets);
+            val_acc = metric.accuracy(net, val_inputs, val_targets);
+        }
+
+        progress.update(epoch, config.epochs, last_mse, last_acc, val_mse, val_acc, last_eta_s, last_epoch_ms);
     }
 
-	progress.finish();
+    progress.finish();
 }
