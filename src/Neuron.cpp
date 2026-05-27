@@ -20,6 +20,11 @@ Neuron::Neuron(int input_size, ActivationType activation, double leaky_alpha, do
 
     bias = dist(rng);
     last_output = 0.0;
+
+    grad_w.resize(weights.size());
+    velocity_w.resize(weights.size());
+    grad_b = 0.0;
+    velocity_b = 0.0;
 }
 
 // double sum = (w1 * x1) + (w2 * x2) + bias;
@@ -137,4 +142,29 @@ void Neuron::update_weights(double delta, double learning_rate)
 void Neuron::update_bias(double delta, double learning_rate)
 {
     bias += learning_rate * delta;
+}
+
+void Neuron::accumulate_gradients(double delta)
+{
+    for (int i = 0; i < weights.size(); i++)
+    {
+        grad_w[i] += delta * last_inputs[i];
+    }
+
+    grad_b += delta;
+}
+
+void Neuron::apply_batch_update(size_t batch_size, double learning_rate, double momentum)
+{
+    for (int i = 0; i < weights.size(); i++)
+    {
+        velocity_w[i] = momentum * velocity_w[i] + (grad_w[i] / batch_size);
+        weights[i] += learning_rate * velocity_w[i];
+    }
+
+    velocity_b = momentum * velocity_b + (grad_b / batch_size);
+    bias += learning_rate * velocity_b;
+
+    std::fill(grad_w.begin(), grad_w.end(), 0.0);
+    grad_b = 0.0;
 }

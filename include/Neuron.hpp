@@ -20,6 +20,8 @@ class Neuron
     double get_delta();
     void update_weights(double delta, double learning_rate);
     void update_bias(double delta, double learning_rate);
+    void accumulate_gradients(double delta);
+    void apply_batch_update(size_t batch_size, double learning_rate, double momentum);
 
   private:
     std::vector<double> weights;
@@ -36,6 +38,9 @@ class Neuron
 
     std::vector<double> velocity_w;
     double velocity_b;
+
+    std::vector<double> grad_w;
+    double grad_b;
 
     double activate(double x)
     {

@@ -2,7 +2,10 @@
 
 #include "Config.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
+#include <stdexcept>
 
 void Trainer::run(
     Network& net,
@@ -17,9 +20,19 @@ void Trainer::run(
     {
         auto start_epoch = std::chrono::steady_clock::now();
 
-        for (size_t i = 0; i < inputs.size(); ++i)
+        size_t batch_size = static_cast<size_t>(config.batch_size);
+        size_t total = inputs.size();
+
+        if (batch_size == 0)
         {
-            net.train(inputs[i], targets[i]);
+            throw std::logic_error("Batch size is 0.");
+        }
+
+        for (size_t batch_start = 0; batch_start < total; batch_start += batch_size)
+        {
+            size_t batch_end = std::min(batch_start + batch_size, total);
+
+            net.trainBatch(inputs, targets, batch_start, batch_end, config.momentum);
         }
 
         auto stop_epoch = std::chrono::steady_clock::now();
