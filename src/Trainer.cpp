@@ -32,7 +32,7 @@ void Trainer::run(
         {
             size_t batch_end = std::min(batch_start + batch_size, total);
 
-            net.trainBatch(inputs, targets, batch_start, batch_end, config.momentum);
+            net.trainBatch(inputs, targets, batch_start, batch_end, config.beta1, config.beta2);
         }
 
         auto stop_epoch = std::chrono::steady_clock::now();

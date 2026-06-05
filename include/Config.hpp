@@ -48,7 +48,6 @@ struct Config
     double huber_delta;
 
     size_t batch_size;
-    double momentum;
     double beta1;
     double beta2;
 };

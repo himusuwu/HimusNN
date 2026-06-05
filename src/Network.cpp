@@ -65,7 +65,7 @@ void Network::train(const std::vector<double>& inputs, const std::vector<double>
     std::vector<std::vector<double>> in{inputs};
     std::vector<std::vector<double>> out{targets};
 
-    trainBatch(in, out, 0, 1, 0.0);
+    trainBatch(in, out, 0, 1, 0.0, 0.0);
 }
 
 void Network::trainBatch(
@@ -73,7 +73,8 @@ void Network::trainBatch(
     const std::vector<std::vector<double>>& targets,
     size_t batch_start,
     size_t batch_end,
-    double momentum
+    double beta1,
+    double beta2
 )
 {
     size_t batch_size = batch_end - batch_start;
@@ -88,13 +89,13 @@ void Network::trainBatch(
         A = layer.forward(A);
     }
 
-    // BCE + Sigmoid: dZ = (target - output)
-    Matrix dZ = Y.sub(A);
+    // BCE + Sigmoid: dZ = (output - target)
+    Matrix dZ = A.sub(Y);
 
-    Matrix dA = layers.back().backward_from_dZ(dZ, learning_rate, momentum, batch_size);
+    Matrix dA = layers.back().backward_from_dZ(dZ, learning_rate, beta1, beta2, batch_size);
 
     for (int i = static_cast<int>(layers.size()) - 2; i >= 0; i--)
     {
-        dA = layers[i].backward(dA, learning_rate, momentum, batch_size);
+        dA = layers[i].backward(dA, learning_rate, beta1, beta2, batch_size);
     }
 }

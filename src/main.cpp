@@ -14,7 +14,7 @@
 
 int main()
 {
-    int epochs = 10000;
+    int epochs = 5000;
     int metric_interval = std::max(1, epochs / 50);
 
     Config config{
@@ -25,7 +25,7 @@ int main()
         40,
         20,
         true,
-        0.01,
+        0.001,
         {16, 8, 1},
         ActivationType::Relu,
         ActivationType::Sigmoid,
@@ -34,7 +34,8 @@ int main()
         1.0,
         1.0,
         1024,
-        0.9
+        0.9,
+        0.999
     };
 
     // Parity 12-bit: output = 1 gdy liczba jedynek jest nieparzysta

@@ -18,8 +18,11 @@ Layer::Layer(
     b(1, neurons_count, 0.0),
     grad_W(neurons_count, input_size, 0.0),
     grad_b(1, neurons_count, 0.0),
-    velocity_W(neurons_count, input_size, 0.0),
-    velocity_b(1, neurons_count, 0.0),
+    m_W(neurons_count, input_size, 0.0),
+    v_W(neurons_count, input_size, 0.0),
+    m_b(1, neurons_count, 0.0),
+    v_b(1, neurons_count, 0.0),
+    t(0),
     activation(activation),
     leaky_alpha(leaky_alpha),
     elu_alpha(elu_alpha),
@@ -108,34 +111,70 @@ Matrix Layer::forward(const Matrix& X)
     return last_output;
 }
 
-Matrix Layer::backward(const Matrix& dA, double learning_rate, double momentum, size_t batch_size)
+Matrix Layer::backward(const Matrix& dA, double learning_rate, double beta1, double beta2, size_t batch_size)
 {
     Matrix dZ = dA.hadamard(last_output.apply([this](double y) { return activate_derivative(y); }));
 
     grad_W = dZ.transposed().matmul(last_input).scaled(1.0 / static_cast<double>(batch_size));
     grad_b = dZ.mean_axis0();
 
-    velocity_W = velocity_W.scaled(momentum).add(grad_W);
-    velocity_b = velocity_b.scaled(momentum).add(grad_b);
+    t++;
 
-    W.add_inplace(velocity_W.scaled(learning_rate));
-    b.add_inplace(velocity_b.scaled(learning_rate));
+    m_W = m_W.scaled(beta1).add(grad_W.scaled(1.0 - beta1));
+    v_W = v_W.scaled(beta2).add(grad_W.hadamard(grad_W).scaled(1.0 - beta2));
+
+    Matrix m_W_hat = m_W.scaled(1.0 / (1.0 - std::pow(beta1, t)));
+    Matrix v_W_hat = v_W.scaled(1.0 / (1.0 - std::pow(beta2, t)));
+
+    double epsilon = 1e-8;
+
+    W.add_inplace(m_W_hat.hadamard(
+                             v_W_hat.apply([epsilon](double val) { return 1.0 / (std::sqrt(val) + epsilon); })
+    ).scaled(-learning_rate));
+
+    m_b = m_b.scaled(beta1).add(grad_b.scaled(1.0 - beta1));
+    v_b = v_b.scaled(beta2).add(grad_b.hadamard(grad_b).scaled(1.0 - beta2));
+
+    Matrix m_b_hat = m_b.scaled(1.0 / (1.0 - std::pow(beta1, t)));
+    Matrix v_b_hat = v_b.scaled(1.0 / (1.0 - std::pow(beta2, t)));
+
+    b.add_inplace(m_b_hat.hadamard(
+                             v_b_hat.apply([epsilon](double val) { return 1.0 / (std::sqrt(val) + epsilon); })
+    ).scaled(-learning_rate));
 
     Matrix dA_prev = dZ.matmul(W);
 
     return dA_prev;
 }
 
-Matrix Layer::backward_from_dZ(const Matrix& dZ, double learning_rate, double momentum, size_t batch_size)
+Matrix Layer::backward_from_dZ(const Matrix& dZ, double learning_rate, double beta1, double beta2, size_t batch_size)
 {
     grad_W = dZ.transposed().matmul(last_input).scaled(1.0 / static_cast<double>(batch_size));
     grad_b = dZ.mean_axis0();
 
-    velocity_W = velocity_W.scaled(momentum).add(grad_W);
-    velocity_b = velocity_b.scaled(momentum).add(grad_b);
+    t++;
 
-    W.add_inplace(velocity_W.scaled(learning_rate));
-    b.add_inplace(velocity_b.scaled(learning_rate));
+    m_W = m_W.scaled(beta1).add(grad_W.scaled(1.0 - beta1));
+    v_W = v_W.scaled(beta2).add(grad_W.hadamard(grad_W).scaled(1.0 - beta2));
+
+    Matrix m_W_hat = m_W.scaled(1.0 / (1.0 - std::pow(beta1, t)));
+    Matrix v_W_hat = v_W.scaled(1.0 / (1.0 - std::pow(beta2, t)));
+
+    double epsilon = 1e-8;
+
+    W.add_inplace(m_W_hat.hadamard(
+                             v_W_hat.apply([epsilon](double val) { return 1.0 / (std::sqrt(val) + epsilon); })
+    ).scaled(-learning_rate));
+
+    m_b = m_b.scaled(beta1).add(grad_b.scaled(1.0 - beta1));
+    v_b = v_b.scaled(beta2).add(grad_b.hadamard(grad_b).scaled(1.0 - beta2));
+
+    Matrix m_b_hat = m_b.scaled(1.0 / (1.0 - std::pow(beta1, t)));
+    Matrix v_b_hat = v_b.scaled(1.0 / (1.0 - std::pow(beta2, t)));
+
+    b.add_inplace(m_b_hat.hadamard(
+                             v_b_hat.apply([epsilon](double val) { return 1.0 / (std::sqrt(val) + epsilon); })
+    ).scaled(-learning_rate));
 
     Matrix dA_prev = dZ.matmul(W);
 

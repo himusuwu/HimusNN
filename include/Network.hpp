@@ -27,7 +27,8 @@ class Network
         const std::vector<std::vector<double>>& targets,
         size_t batch_start,
         size_t batch_end,
-        double momentum
+        double beta1,
+        double beta2
     );
     void save(const std::string& path) const;
     void load(const std::string& path);
