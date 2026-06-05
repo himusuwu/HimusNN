@@ -1,6 +1,26 @@
 #include "../include/Network.hpp"
 
+#include "Matrix.hpp"
+
 #include <vector>
+
+static Matrix make_batch_matrix(const std::vector<std::vector<double>>& v, size_t start, size_t end)
+{
+    size_t rows = end - start;
+    size_t cols = v[start].size();
+
+    Matrix out(rows, cols);
+
+    for (size_t r = 0; r < rows; r++)
+    {
+        for (size_t c = 0; c < cols; c++)
+        {
+            out(r, c) = v[start + r][c];
+        }
+    }
+
+    return out;
+}
 
 Network::Network(
     int input_size,
@@ -25,79 +45,22 @@ Network::Network(
 
 std::vector<double> Network::predict(const std::vector<double>& inputs)
 {
-    std::vector<double> current = inputs;
+    Matrix X = Matrix::from_vector(inputs, true);
 
     for (Layer& layer : layers)
     {
-        current = layer.forward(current);
+        X = layer.forward(X);
     }
 
-    return current;
+    return X.row(0);
 }
 
 void Network::train(const std::vector<double>& inputs, const std::vector<double>& targets)
 {
-    predict(inputs);
+    std::vector<std::vector<double>> in{inputs};
+    std::vector<std::vector<double>> out{targets};
 
-    double sum = 0.0;
-
-    std::vector<Neuron>& neurons = layers.back().getNeurons();
-
-    if (targets.size() == layers.back().getNeurons().size())
-    {
-        for (int i = 0; i < targets.size(); i++)
-        {
-            double target = targets[i];
-            double output = neurons[i].get_last_output();
-
-            neurons[i].calculate_out_delta(target, output, loss);
-        }
-    }
-    else
-    {
-        return;
-    }
-
-    if (layers.size() >= 2)
-    {
-        int start = static_cast<int>(layers.size()) - 2;
-
-        for (int i = start; i >= 0; i--)
-        {
-            Layer& current_layer = layers[i];
-            std::vector<Neuron>& current_neurons = current_layer.getNeurons();
-
-            Layer& next_layer = layers[i + 1];
-            std::vector<Neuron>& next_neurons = next_layer.getNeurons();
-
-            for (size_t j = 0; j < current_neurons.size(); j++)
-            {
-                sum = 0.0;
-
-                for (size_t k = 0; k < next_neurons.size(); k++)
-                {
-                    sum += next_neurons[k].get_weights()[j] * next_neurons[k].get_delta();
-                }
-
-                current_neurons[j].calculate_hidden_delta(sum);
-            }
-        }
-    }
-    else
-    {
-        return;
-    }
-
-    for (Layer& layer : layers)
-    {
-        for (Neuron& neuron : layer.getNeurons())
-        {
-            double delta = neuron.get_delta();
-
-            neuron.update_weights(delta, learning_rate);
-            neuron.update_bias(delta, learning_rate);
-        }
-    }
+    trainBatch(in, out, 0, 1, 0.0);
 }
 
 void Network::trainBatch(
@@ -108,70 +71,25 @@ void Network::trainBatch(
     double momentum
 )
 {
-    for (size_t sample = batch_start; sample < batch_end; sample++)
-    {
-        predict(inputs[sample]);
+    size_t batch_size = batch_end - batch_start;
 
-        double sum = 0.0;
+    Matrix X = make_batch_matrix(inputs, batch_start, batch_end);
+    Matrix Y = make_batch_matrix(targets, batch_start, batch_end);
 
-        std::vector<Neuron>& neurons = layers.back().getNeurons();
-
-        for (int out_idx = 0; out_idx < targets[sample].size(); out_idx++)
-        {
-            double target = targets[sample][out_idx];
-            double output = neurons[out_idx].get_last_output();
-
-            neurons[out_idx].calculate_out_delta(target, output, loss);
-        }
-
-        if (layers.size() >= 2)
-        {
-            int start = static_cast<int>(layers.size()) - 2;
-
-            for (int i = start; i >= 0; i--)
-            {
-                Layer& current_layer = layers[i];
-                std::vector<Neuron>& current_neurons = current_layer.getNeurons();
-
-                Layer& next_layer = layers[i + 1];
-                std::vector<Neuron>& next_neurons = next_layer.getNeurons();
-
-                for (size_t j = 0; j < current_neurons.size(); j++)
-                {
-                    sum = 0.0;
-
-                    for (size_t k = 0; k < next_neurons.size(); k++)
-                    {
-                        sum += next_neurons[k].get_weights()[j] * next_neurons[k].get_delta();
-                    }
-
-                    current_neurons[j].calculate_hidden_delta(sum);
-                }
-            }
-        }
-        else
-        {
-            return;
-        }
-
-        for (Layer& layer : layers)
-        {
-            for (Neuron& neuron : layer.getNeurons())
-            {
-                double delta = neuron.get_delta();
-
-                neuron.accumulate_gradients(delta);
-            }
-        }
-    }
+    Matrix A = X;
 
     for (Layer& layer : layers)
     {
-        for (Neuron& neuron : layer.getNeurons())
-        {
-            double delta = neuron.get_delta();
+        A = layer.forward(A);
+    }
 
-            neuron.apply_batch_update(batch_end - batch_start, learning_rate, momentum);
-        }
+    // BCE + Sigmoid: dZ = (target - output)
+    Matrix dZ = Y.sub(A);
+
+    Matrix dA = layers.back().backward_from_dZ(dZ, learning_rate, momentum, batch_size);
+
+    for (int i = static_cast<int>(layers.size()) - 2; i >= 0; i--)
+    {
+        dA = layers[i].backward(dA, learning_rate, momentum, batch_size);
     }
 }
