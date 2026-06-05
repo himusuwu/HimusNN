@@ -14,8 +14,8 @@
 
 int main()
 {
-    int epochs = 1000;
-    int metric_interval = std::max(1, epochs / 20);
+    int epochs = 5000;
+    int metric_interval = std::max(1, epochs / 50);
 
     Config config{
         epochs,
