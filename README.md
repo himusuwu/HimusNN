@@ -1,10 +1,10 @@
 # HimusNN
 
-Simple multi-layer perceptron (MLP) in C++ with manual backprop. The example trains a 3-bit parity function.
+Simple multi-layer perceptron (MLP) in C++ with manual backprop using matrix-based layers. The example trains a 12-bit parity function.
 
 ## Features
 
-- Implementation of neurons, layers, and network (forward + backprop)
+- Matrix-based layers (W*x + b) with batch forward/backprop
 - Modular activations and loss functions (configurable)
 - CSV data loader with train/val split and min-max normalization
 - Training progress bar with metrics and ETA (train + validation)
@@ -37,27 +37,28 @@ cmake --build build --target run
 
 ## Example Output
 
-The program trains a `3 -> 6 -> 1` network for 50_000 epochs and prints predictions:
+The program trains a `12 -> 16 -> 8 -> 1` network and prints predictions:
 
 ```
-000 -> 0 (raw=...)
-001 -> 1 (raw=...)
-010 -> 1 (raw=...)
-011 -> 0 (raw=...)
-100 -> 1 (raw=...)
-101 -> 0 (raw=...)
-110 -> 0 (raw=...)
-111 -> 1 (raw=...)
+000000000000 -> 0 (raw=...)
+000000000001 -> 1 (raw=...)
+000000000010 -> 1 (raw=...)
+000000000011 -> 0 (raw=...)
+000000000100 -> 1 (raw=...)
+000000000101 -> 0 (raw=...)
+000000000110 -> 0 (raw=...)
+000000000111 -> 1 (raw=...)
 ```
 
 ## Structure
 
 - `src/` - implementations and training loop
-- `include/` - class headers (`Neuron`, `Layer`, `Network`, `Trainer`, `Progress`, `Timing`, `Metric`, `Config`)
+- `include/` - class headers (`Matrix`, `Layer`, `Network`, `Trainer`, `Progress`, `Timing`, `Metric`, `Config`)
 - `CMakeLists.txt` - build configuration
 
 ## Notes
 
 - Training settings (epochs, intervals, learning rate, activations, loss) are defined in `Config`.
-- The example uses a 3-bit parity dataset in `data/parity.csv` and splits it into train/val.
+- The example uses a 12-bit parity dataset in `data/parity.csv` and splits it into train/val.
 - Normalization stats are computed on the train set and applied to both train and val.
+- Legacy neuron-based version is available on the `old-neuron` branch.
