@@ -1,7 +1,9 @@
 #include "../include/Network.hpp"
 
+#include "Config.hpp"
 #include "Matrix.hpp"
 
+#include <cstddef>
 #include <vector>
 
 static Matrix make_batch_matrix(const std::vector<std::vector<double>>& v, size_t start, size_t end)
@@ -26,20 +28,23 @@ Network::Network(
     int input_size,
     std::vector<int> layers_sizes,
     double learning_rate,
-    ActivationType activation,
+    ActivationType hidden_activation,
+    ActivationType output_activation,
     LossType loss,
     double leaky_alpha,
     double elu_alpha,
     double huber_delta
 ) :
-    learning_rate(learning_rate), activation(activation), loss(loss)
+    learning_rate(learning_rate), hidden_activation(hidden_activation), output_activation(output_activation), loss(loss)
 {
     int prev_size = input_size;
 
-    for (int& size : layers_sizes)
+    for (size_t i = 0; i < layers_sizes.size(); i++)
     {
-        layers.push_back(Layer(size, prev_size, activation, leaky_alpha, elu_alpha, huber_delta));
-        prev_size = size;
+        ActivationType current_act = (i == layers_sizes.size() - 1) ? output_activation : hidden_activation;
+
+        layers.emplace_back(layers_sizes[i], prev_size, current_act, leaky_alpha, elu_alpha, huber_delta);
+        prev_size = layers_sizes[i];
     }
 }
 

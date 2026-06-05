@@ -14,7 +14,7 @@
 
 int main()
 {
-    int epochs = 5000;
+    int epochs = 10000;
     int metric_interval = std::max(1, epochs / 50);
 
     Config config{
@@ -25,8 +25,9 @@ int main()
         40,
         20,
         true,
-        0.5,
+        0.01,
         {16, 8, 1},
+        ActivationType::Relu,
         ActivationType::Sigmoid,
         LossType::BCE,
         0.01,
@@ -41,7 +42,8 @@ int main()
         12,
         config.layers,
         config.learning_rate,
-        config.activation,
+        config.hidden_activation,
+        config.output_activation,
         config.loss,
         config.leaky_alpha,
         config.elu_alpha,

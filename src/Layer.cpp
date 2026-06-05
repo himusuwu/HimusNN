@@ -26,7 +26,10 @@ Layer::Layer(
     huber_delta(huber_delta)
 {
     std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<double> dist(-0.5, 0.5);
+
+    double stddev = std::sqrt(2.0 / static_cast<double>(input_size));
+
+    std::normal_distribution<double> dist(0.0, stddev);
 
     for (size_t r = 0; r < W.rows; r++)
     {

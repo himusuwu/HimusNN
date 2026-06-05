@@ -13,7 +13,8 @@ class Network
         int input_size,
         std::vector<int> layers_sizes,
         double learning_rate,
-        ActivationType activation,
+        ActivationType hidden_activation,
+        ActivationType output_activation,
         LossType loss,
         double leaky_alpha,
         double elu_alpha,
@@ -35,7 +36,8 @@ class Network
     std::vector<Layer> layers;
     double learning_rate;
 
-    ActivationType activation;
+    ActivationType hidden_activation;
+    ActivationType output_activation;
     LossType loss;
 };
 

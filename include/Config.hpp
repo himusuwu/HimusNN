@@ -39,7 +39,8 @@ struct Config
 
     std::vector<int> layers;
 
-    ActivationType activation;
+    ActivationType hidden_activation;
+    ActivationType output_activation;
     LossType loss;
 
     double leaky_alpha;
