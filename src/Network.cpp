@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <vector>
 
-static Matrix make_batch_matrix(const std::vector<std::vector<double>>& v, size_t start, size_t end)
+static Matrix make_batch_matrix(const std::vector<std::vector<float>>& v, size_t start, size_t end)
 {
     size_t rows = end - start;
     size_t cols = v[start].size();
@@ -27,13 +27,13 @@ static Matrix make_batch_matrix(const std::vector<std::vector<double>>& v, size_
 Network::Network(
     int input_size,
     std::vector<int> layers_sizes,
-    double learning_rate,
+    float learning_rate,
     ActivationType hidden_activation,
     ActivationType output_activation,
     LossType loss,
-    double leaky_alpha,
-    double elu_alpha,
-    double huber_delta
+    float leaky_alpha,
+    float elu_alpha,
+    float huber_delta
 ) :
     learning_rate(learning_rate), hidden_activation(hidden_activation), output_activation(output_activation), loss(loss)
 {
@@ -48,7 +48,7 @@ Network::Network(
     }
 }
 
-std::vector<double> Network::predict(const std::vector<double>& inputs)
+std::vector<float> Network::predict(const std::vector<float>& inputs)
 {
     Matrix X = Matrix::from_vector(inputs, true);
 
@@ -60,21 +60,21 @@ std::vector<double> Network::predict(const std::vector<double>& inputs)
     return X.row(0);
 }
 
-void Network::train(const std::vector<double>& inputs, const std::vector<double>& targets)
+void Network::train(const std::vector<float>& inputs, const std::vector<float>& targets)
 {
-    std::vector<std::vector<double>> in{inputs};
-    std::vector<std::vector<double>> out{targets};
+    std::vector<std::vector<float>> in{inputs};
+    std::vector<std::vector<float>> out{targets};
 
-    trainBatch(in, out, 0, 1, 0.0, 0.0);
+    trainBatch(in, out, 0, 1, 0.0f, 0.0f);
 }
 
 void Network::trainBatch(
-    const std::vector<std::vector<double>>& inputs,
-    const std::vector<std::vector<double>>& targets,
+    const std::vector<std::vector<float>>& inputs,
+    const std::vector<std::vector<float>>& targets,
     size_t batch_start,
     size_t batch_end,
-    double beta1,
-    double beta2
+    float beta1,
+    float beta2
 )
 {
     size_t batch_size = batch_end - batch_start;

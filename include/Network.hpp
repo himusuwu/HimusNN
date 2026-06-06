@@ -12,30 +12,30 @@ class Network
     Network(
         int input_size,
         std::vector<int> layers_sizes,
-        double learning_rate,
+        float learning_rate,
         ActivationType hidden_activation,
         ActivationType output_activation,
         LossType loss,
-        double leaky_alpha,
-        double elu_alpha,
-        double huber_delta
+        float leaky_alpha,
+        float elu_alpha,
+        float huber_delta
     );
-    std::vector<double> predict(const std::vector<double>& inputs);
-    void train(const std::vector<double>& inputs, const std::vector<double>& targets);
+    std::vector<float> predict(const std::vector<float>& inputs);
+    void train(const std::vector<float>& inputs, const std::vector<float>& targets);
     void trainBatch(
-        const std::vector<std::vector<double>>& inputs,
-        const std::vector<std::vector<double>>& targets,
+        const std::vector<std::vector<float>>& inputs,
+        const std::vector<std::vector<float>>& targets,
         size_t batch_start,
         size_t batch_end,
-        double beta1,
-        double beta2
+        float beta1,
+        float beta2
     );
     void save(const std::string& path) const;
     void load(const std::string& path);
 
   private:
     std::vector<Layer> layers;
-    double learning_rate;
+    float learning_rate;
 
     ActivationType hidden_activation;
     ActivationType output_activation;

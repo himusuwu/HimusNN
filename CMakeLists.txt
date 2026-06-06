@@ -18,7 +18,7 @@ set(SOURCE_FILES
     src/Trainer.cpp 
     src/Metric.cpp 
     src/DataLoader.cpp 
-    src/Matrix.cpp
+    src/Matrix.mm
 )
 
 include_directories(include)
@@ -38,6 +38,22 @@ if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "AppleClang|Clang")
     if(ipo_supported)
         set_target_properties(HimusNN PROPERTIES
             INTERPROCEDURAL_OPTIMIZATION TRUE
+        )
+    endif()
+endif()
+
+if(APPLE)
+    find_library(ACCELERATE_FRAMEWORK Accelerate)
+    find_library(METAL_FRAMEWORK Metal)
+    find_library(MPS_FRAMEWORK MetalPerformanceShaders)
+    find_library(FOUNDATION_FRAMEWORK Foundation)
+
+    if(ACCELERATE_FRAMEWORK)
+        target_link_libraries(HimusNN PRIVATE
+            ${ACCELERATE_FRAMEWORK}
+            ${METAL_FRAMEWORK}
+            ${MPS_FRAMEWORK}
+            ${FOUNDATION_FRAMEWORK}
         )
     endif()
 endif()

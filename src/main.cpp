@@ -25,17 +25,17 @@ int main()
         40,
         20,
         true,
-        0.001,
-        {16, 8, 1},
+        0.005,
+        {32, 16, 1},
         ActivationType::Relu,
         ActivationType::Sigmoid,
         LossType::BCE,
-        0.01,
-        1.0,
-        1.0,
+        0.01f,
+        1.0f,
+        1.0f,
         1024,
-        0.9,
-        0.999
+        0.9f,
+        0.999f
     };
 
     // Parity 12-bit: output = 1 gdy liczba jedynek jest nieparzysta
@@ -57,7 +57,7 @@ int main()
 
     DataSet data = DataLoader::loadCSV(path, input_cols, target_cols);
 
-    double val_ratio = 0.2;
+    float val_ratio = 0.2f;
     unsigned seed = 121;
 
     SplitData split = DataLoader::split(data, val_ratio, seed);
@@ -74,9 +74,9 @@ int main()
     // test
     for (size_t i = 0; i < std::min<size_t>(10, split.train.inputs.size()); ++i)
     {
-        std::vector<double> out = net.predict(split.train.inputs[i]);
-        double y = out[0];
-        int pred = (y > 0.5) ? 1 : 0;
+        std::vector<float> out = net.predict(split.train.inputs[i]);
+        float y = out[0];
+        int pred = (y > 0.5f) ? 1 : 0;
 
         for (size_t j = 0; j < split.train.inputs[i].size(); ++j)
         {

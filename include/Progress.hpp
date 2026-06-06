@@ -12,12 +12,12 @@ class Progress
     void update(
         int epoch,
         int epochs,
-        double mse,
-        double acc,
-        double val_mse,
-        double val_acc,
-        std::chrono::duration<double> eta_s,
-        std::chrono::duration<double, std::milli> epoch_ms
+        float mse,
+        float acc,
+        float val_mse,
+        float val_acc,
+        std::chrono::duration<float> eta_s,
+        std::chrono::duration<float, std::milli> epoch_ms
     );
 
     void finish();

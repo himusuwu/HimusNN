@@ -22,8 +22,8 @@ DataSet DataLoader::loadCSV(const std::string& path, int input_cols, int target_
 
         while (std::getline(file, line))
         {
-            std::vector<double> input;
-            std::vector<double> target;
+            std::vector<float> input;
+            std::vector<float> target;
 
             std::stringstream ss(line);
             std::string cell;
@@ -32,7 +32,7 @@ DataSet DataLoader::loadCSV(const std::string& path, int input_cols, int target_
 
             while (std::getline(ss, cell, sep))
             {
-                double value = std::stod(cell);
+                float value = std::stod(cell);
 
                 if (current_col < input_cols)
                 {
@@ -64,8 +64,8 @@ void DataLoader::normalize(DataSet& data)
         throw std::length_error("Inputs array size is different than targets array size.");
     }
 
-    std::vector<double> min_vals;
-    std::vector<double> max_vals;
+    std::vector<float> min_vals;
+    std::vector<float> max_vals;
 
     if (data.inputs.empty())
     {
@@ -77,7 +77,7 @@ void DataLoader::normalize(DataSet& data)
     min_vals.resize(cols);
     max_vals.resize(cols);
 
-    double eps = 1e-9;
+    float eps = 1e-9;
 
     for (size_t col = 0; col < cols; col++)
     {
@@ -105,7 +105,7 @@ void DataLoader::normalize(DataSet& data)
     }
 }
 
-SplitData DataLoader::split(const DataSet& data, double val_ratio, unsigned seed)
+SplitData DataLoader::split(const DataSet& data, float val_ratio, unsigned seed)
 {
     SplitData result;
 
@@ -141,8 +141,8 @@ SplitData DataLoader::split(const DataSet& data, double val_ratio, unsigned seed
 
 DataLoader::NormalizationStats DataLoader::calculate_stats(const DataSet& data)
 {
-    std::vector<double> min_vals;
-    std::vector<double> max_vals;
+    std::vector<float> min_vals;
+    std::vector<float> max_vals;
 
     if (data.inputs.empty())
     {

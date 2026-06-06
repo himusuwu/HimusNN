@@ -16,10 +16,10 @@ class Trainer
 
     void
     run(Network& net,
-        const std::vector<std::vector<double>>& inputs,
-        const std::vector<std::vector<double>>& targets,
-        const std::vector<std::vector<double>>& val_inputs,
-        const std::vector<std::vector<double>>& val_targets,
+        const std::vector<std::vector<float>>& inputs,
+        const std::vector<std::vector<float>>& targets,
+        const std::vector<std::vector<float>>& val_inputs,
+        const std::vector<std::vector<float>>& val_targets,
         const Config& config);
 
   private:
@@ -27,14 +27,14 @@ class Trainer
     Timing timing;
     Progress progress;
 
-    double last_mse = 0.0;
-    double last_acc = 0.0;
+    float last_mse = 0.0f;
+    float last_acc = 0.0f;
 
-    double val_mse = 0.0;
-    double val_acc = 0.0;
+    float val_mse = 0.0f;
+    float val_acc = 0.0f;
 
-    std::chrono::duration<double> last_eta_s{};
-    std::chrono::duration<double, std::milli> last_epoch_ms{};
+    std::chrono::duration<float> last_eta_s{};
+    std::chrono::duration<float, std::milli> last_epoch_ms{};
 };
 
 #endif

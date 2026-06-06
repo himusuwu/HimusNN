@@ -10,39 +10,39 @@
 class Neuron
 {
   public:
-    Neuron(int inputs_size, ActivationType activation, double leaky_alph, double elu_alpha, double huber_delta);
-    double calculate(std::vector<double> inputs);
-    double calculate_out_delta(double target, double output, LossType loss);
-    double calculate_hidden_delta(double sum);
-    const std::vector<double>& get_weights();
-    double get_last_output();
-    std::vector<double> get_last_inputs();
-    double get_delta();
-    void update_weights(double delta, double learning_rate);
-    void update_bias(double delta, double learning_rate);
-    void accumulate_gradients(double delta);
-    void apply_batch_update(size_t batch_size, double learning_rate, double momentum);
+    Neuron(int inputs_size, ActivationType activation, float leaky_alph, float elu_alpha, float huber_delta);
+    float calculate(std::vector<float> inputs);
+    float calculate_out_delta(float target, float output, LossType loss);
+    float calculate_hidden_delta(float sum);
+    const std::vector<float>& get_weights();
+    float get_last_output();
+    std::vector<float> get_last_inputs();
+    float get_delta();
+    void update_weights(float delta, float learning_rate);
+    void update_bias(float delta, float learning_rate);
+    void accumulate_gradients(float delta);
+    void apply_batch_update(size_t batch_size, float learning_rate, float momentum);
 
   private:
-    std::vector<double> weights;
-    double bias;
-    double last_output;
-    std::vector<double> last_inputs;
-    double delta;
+    std::vector<float> weights;
+    float bias;
+    float last_output;
+    std::vector<float> last_inputs;
+    float delta;
 
     ActivationType activation;
 
-    double leaky_alpha;
-    double elu_alpha;
-    double huber_delta;
+    float leaky_alpha;
+    float elu_alpha;
+    float huber_delta;
 
-    std::vector<double> velocity_w;
-    double velocity_b;
+    std::vector<float> velocity_w;
+    float velocity_b;
 
-    std::vector<double> grad_w;
-    double grad_b;
+    std::vector<float> grad_w;
+    float grad_b;
 
-    double activate(double x)
+    float activate(float x)
     {
         switch (activation)
         {
@@ -51,7 +51,7 @@ class Neuron
             case ActivationType::Tanh:
                 return (tanh(x));
             case ActivationType::Relu:
-                return (std::max(0.0, x));
+                return (std::max(0.0, static_cast<double>(x)));
             case ActivationType::LeakyRelu:
                 return ((x > 0) ? x : leaky_alpha * x);
             case ActivationType::Elu:
@@ -63,7 +63,7 @@ class Neuron
         }
     }
 
-    double activateDerivative(double y)
+    float activateDerivative(float y)
     {
         switch (activation)
         {

@@ -6,15 +6,15 @@
 class Metric
 {
   public:
-    double
-    mse(Network& net, const std::vector<std::vector<double>>& inputs, const std::vector<std::vector<double>>& targets);
+    float
+    mse(Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets);
 
-    double accuracy(
-        Network& net, const std::vector<std::vector<double>>& inputs, const std::vector<std::vector<double>>& targets
+    float accuracy(
+        Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets
     );
 
   private:
-    double sum_squared_error = 0.0;
+    float sum_squared_error = 0.0f;
     size_t correct = 0;
 };
 

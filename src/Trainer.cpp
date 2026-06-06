@@ -9,10 +9,10 @@
 
 void Trainer::run(
     Network& net,
-    const std::vector<std::vector<double>>& inputs,
-    const std::vector<std::vector<double>>& targets,
-    const std::vector<std::vector<double>>& val_inputs,
-    const std::vector<std::vector<double>>& val_targets,
+    const std::vector<std::vector<float>>& inputs,
+    const std::vector<std::vector<float>>& targets,
+    const std::vector<std::vector<float>>& val_inputs,
+    const std::vector<std::vector<float>>& val_targets,
     const Config& config
 )
 {

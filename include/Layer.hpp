@@ -11,13 +11,13 @@ class Layer
         int neurons_count,
         int input_size,
         ActivationType activation,
-        double leaky_alpha,
-        double elu_alpha,
-        double huber_delta
+        float leaky_alpha,
+        float elu_alpha,
+        float huber_delta
     );
     Matrix forward(const Matrix& X);
-    Matrix backward(const Matrix& dA, double learning_rate, double beta1, double beta2, size_t batch_size);
-    Matrix backward_from_dZ(const Matrix& dZ, double learning_rate, double beta1, double beta2, size_t batch_size);
+    Matrix backward(const Matrix& dA, float learning_rate, float beta1, float beta2, size_t batch_size);
+    Matrix backward_from_dZ(const Matrix& dZ, float learning_rate, float beta1, float beta2, size_t batch_size);
 
   private:
     Matrix W;           // out x in
@@ -37,12 +37,12 @@ class Layer
     size_t t;
 
     ActivationType activation;
-    double leaky_alpha;
-    double elu_alpha;
-    double huber_delta;
+    float leaky_alpha;
+    float elu_alpha;
+    float huber_delta;
 
-    double activate(double x) const;
-    double activate_derivative(double y) const;
+    float activate(float x) const;
+    float activate_derivative(float y) const;
 };
 
 #endif

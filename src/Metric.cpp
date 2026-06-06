@@ -1,15 +1,15 @@
 #include "Metric.hpp"
 
-double Metric::mse(
-    Network& net, const std::vector<std::vector<double>>& inputs, const std::vector<std::vector<double>>& targets
+float Metric::mse(
+    Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets
 )
 {
-    sum_squared_error = 0.0;
+    sum_squared_error = 0.0f;
 
     for (size_t i = 0; i < inputs.size(); i++)
     {
-        std::vector<double> out = net.predict(inputs[i]);
-        double diff = targets[i][0] - out[0];
+        std::vector<float> out = net.predict(inputs[i]);
+        float diff = targets[i][0] - out[0];
 
         sum_squared_error += diff * diff;
     }
@@ -17,16 +17,16 @@ double Metric::mse(
     return sum_squared_error / inputs.size();
 }
 
-double Metric::accuracy(
-    Network& net, const std::vector<std::vector<double>>& inputs, const std::vector<std::vector<double>>& targets
+float Metric::accuracy(
+    Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets
 )
 {
     correct = 0;
 
     for (size_t i = 0; i < inputs.size(); i++)
     {
-        std::vector<double> out = net.predict(inputs[i]);
-        double y = out[0];
+        std::vector<float> out = net.predict(inputs[i]);
+        float y = out[0];
 
         int pred = (y > 0.5) ? 1 : 0;
 
@@ -36,5 +36,5 @@ double Metric::accuracy(
         }
     }
 
-    return static_cast<double>(correct) / inputs.size();
+    return static_cast<float>(correct) / inputs.size();
 }

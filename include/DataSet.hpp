@@ -5,8 +5,8 @@
 
 struct DataSet
 {
-    std::vector<std::vector<double>> inputs;
-    std::vector<std::vector<double>> targets;
+    std::vector<std::vector<float>> inputs;
+    std::vector<std::vector<float>> targets;
 };
 
 struct SplitData

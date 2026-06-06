@@ -35,7 +35,7 @@ struct Config
 
     bool use_color;
 
-    double learning_rate;
+    float learning_rate;
 
     std::vector<int> layers;
 
@@ -43,13 +43,13 @@ struct Config
     ActivationType output_activation;
     LossType loss;
 
-    double leaky_alpha;
-    double elu_alpha;
-    double huber_delta;
+    float leaky_alpha;
+    float elu_alpha;
+    float huber_delta;
 
     size_t batch_size;
-    double beta1;
-    double beta2;
+    float beta1;
+    float beta2;
 };
 
 #endif

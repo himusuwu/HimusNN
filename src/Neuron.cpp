@@ -7,11 +7,11 @@
 #include <stdexcept>
 #include <vector>
 
-Neuron::Neuron(int input_size, ActivationType activation, double leaky_alpha, double elu_alpha, double huber_delta) :
+Neuron::Neuron(int input_size, ActivationType activation, float leaky_alpha, float elu_alpha, float huber_delta) :
     activation(activation), leaky_alpha(leaky_alpha), elu_alpha(elu_alpha), huber_delta(huber_delta)
 {
     std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<double> dist(-0.5, 0.5);
+    std::uniform_real_distribution<float> dist(-0.5f, 0.5f);
 
     for (int i = 0; i < input_size; i++)
     {
@@ -19,26 +19,26 @@ Neuron::Neuron(int input_size, ActivationType activation, double leaky_alpha, do
     }
 
     bias = dist(rng);
-    last_output = 0.0;
+    last_output = 0.0f;
 
     grad_w.resize(weights.size());
     velocity_w.resize(weights.size());
-    grad_b = 0.0;
-    velocity_b = 0.0;
+    grad_b = 0.0f;
+    velocity_b = 0.0f;
 }
 
-// double sum = (w1 * x1) + (w2 * x2) + bias;
+// float sum = (w1 * x1) + (w2 * x2) + bias;
 
-double Neuron::calculate(std::vector<double> inputs)
+float Neuron::calculate(std::vector<float> inputs)
 {
     last_inputs.clear();
 
-    for (double& input : inputs)
+    for (float& input : inputs)
     {
         last_inputs.push_back(input);
     }
 
-    double sum = 0.0;
+    float sum = 0.0f;
 
     if (inputs.size() == weights.size())
     {
@@ -55,7 +55,7 @@ double Neuron::calculate(std::vector<double> inputs)
     return activate(sum);
 }
 
-double Neuron::calculate_out_delta(double target, double output, LossType loss)
+float Neuron::calculate_out_delta(float target, float output, LossType loss)
 {
     switch (loss)
     {
@@ -82,17 +82,17 @@ double Neuron::calculate_out_delta(double target, double output, LossType loss)
         }
         case LossType::MAE:
         {
-            double e = output - target;
-            double grad = (e > 0) ? 1.0 : (e < 0) ? -1.0 : 0.0;
+            float e = output - target;
+            float grad = (e > 0) ? 1.0f : (e < 0) ? -1.0f : 0.0f;
 
             delta = -grad * activateDerivative(output);
             break;
         }
         case LossType::Huber:
         {
-            double e = output - target;
-            double abs_e = std::abs(e);
-            double grad = (abs_e <= huber_delta) ? e : huber_delta * ((e > 0) ? 1.0 : -1.0);
+            float e = output - target;
+            float abs_e = std::abs(e);
+            float grad = (abs_e <= huber_delta) ? e : huber_delta * ((e > 0) ? 1.0f : -1.0f);
 
             delta = -grad * activateDerivative(output);
             break;
@@ -104,34 +104,34 @@ double Neuron::calculate_out_delta(double target, double output, LossType loss)
     return delta;
 }
 
-double Neuron::calculate_hidden_delta(double sum)
+float Neuron::calculate_hidden_delta(float sum)
 {
     delta = sum * activateDerivative(last_output);
 
     return delta;
 }
 
-const std::vector<double>& Neuron::get_weights()
+const std::vector<float>& Neuron::get_weights()
 {
     return weights;
 }
 
-double Neuron::get_last_output()
+float Neuron::get_last_output()
 {
     return last_output;
 }
 
-std::vector<double> Neuron::get_last_inputs()
+std::vector<float> Neuron::get_last_inputs()
 {
     return last_inputs;
 }
 
-double Neuron::get_delta()
+float Neuron::get_delta()
 {
     return delta;
 }
 
-void Neuron::update_weights(double delta, double learning_rate)
+void Neuron::update_weights(float delta, float learning_rate)
 {
     for (int i = 0; i < weights.size(); i++)
     {
@@ -139,12 +139,12 @@ void Neuron::update_weights(double delta, double learning_rate)
     }
 }
 
-void Neuron::update_bias(double delta, double learning_rate)
+void Neuron::update_bias(float delta, float learning_rate)
 {
     bias += learning_rate * delta;
 }
 
-void Neuron::accumulate_gradients(double delta)
+void Neuron::accumulate_gradients(float delta)
 {
     for (int i = 0; i < weights.size(); i++)
     {
@@ -154,7 +154,7 @@ void Neuron::accumulate_gradients(double delta)
     grad_b += delta;
 }
 
-void Neuron::apply_batch_update(size_t batch_size, double learning_rate, double momentum)
+void Neuron::apply_batch_update(size_t batch_size, float learning_rate, float momentum)
 {
     for (int i = 0; i < weights.size(); i++)
     {
@@ -165,6 +165,6 @@ void Neuron::apply_batch_update(size_t batch_size, double learning_rate, double 
     velocity_b = momentum * velocity_b + (grad_b / batch_size);
     bias += learning_rate * velocity_b;
 
-    std::fill(grad_w.begin(), grad_w.end(), 0.0);
-    grad_b = 0.0;
+    std::fill(grad_w.begin(), grad_w.end(), 0.0f);
+    grad_b = 0.0f;
 }
