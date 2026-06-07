@@ -7,6 +7,7 @@ Simple multi-layer perceptron (MLP) in C++ with manual backprop using matrix-bas
 - Matrix-based layers (W*x + b) with batch forward/backprop using `float32` precision
 - **Apple Silicon Native**: Hybrid dispatch engine utilizing Apple Accelerate (AMX/vDSP) for CPU and Metal (MPS) for GPU scaling
 - **Adam Optimizer**: Stable and fast convergence using Adam / RMSProp
+- **Modern C++20 API**: Enforced `noexcept` move semantics, `[[nodiscard]]` safeguards, `explicit` constructors, and `[[unlikely]]` branch prediction hints for zero-overhead execution
 - Modular activations (separate for hidden and output layers) and loss functions
 - CSV data loader with train/val split and min-max normalization
 - Training progress bar with metrics and ETA (train + validation)

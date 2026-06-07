@@ -6,10 +6,10 @@
 class Metric
 {
   public:
-    float
+    [[nodiscard]] float
     mse(Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets);
 
-    float accuracy(
+    [[nodiscard]] float accuracy(
         Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets
     );
 

@@ -17,10 +17,10 @@ class DataLoader
         float eps = 1e-9f;
     };
 
-    static DataSet loadCSV(const std::string& path, int input_cols, int target_cols, char sep = ',');
+    [[nodiscard]] static DataSet loadCSV(const std::string& path, int input_cols, int target_cols, char sep = ',');
     static void normalize(DataSet& data);
-    static SplitData split(const DataSet& data, float val_ratio, unsigned seed);
-    static NormalizationStats calculate_stats(const DataSet& data);
+    [[nodiscard]] static SplitData split(const DataSet& data, float val_ratio, unsigned seed);
+    [[nodiscard]] static NormalizationStats calculate_stats(const DataSet& data);
     static void applyNormalization(DataSet& data, const NormalizationStats& stats);
 };
 

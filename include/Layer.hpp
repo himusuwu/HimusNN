@@ -15,9 +15,16 @@ class Layer
         float elu_alpha,
         float huber_delta
     );
-    Matrix forward(const Matrix& X);
-    Matrix backward(const Matrix& dA, float learning_rate, float beta1, float beta2, size_t batch_size);
-    Matrix backward_from_dZ(const Matrix& dZ, float learning_rate, float beta1, float beta2, size_t batch_size);
+
+    Layer(const Layer&) = default;
+    Layer& operator=(const Layer&) = default;
+    Layer(Layer&&) noexcept = default;
+    Layer& operator=(Layer&&) noexcept = default;
+
+    [[nodiscard]] Matrix forward(const Matrix& X);
+    [[nodiscard]] Matrix backward(const Matrix& dA, float learning_rate, float beta1, float beta2, size_t batch_size);
+    [[nodiscard]] Matrix
+    backward_from_dZ(const Matrix& dZ, float learning_rate, float beta1, float beta2, size_t batch_size);
 
   private:
     Matrix W;           // out x in
@@ -41,8 +48,8 @@ class Layer
     float elu_alpha;
     float huber_delta;
 
-    float activate(float x) const;
-    float activate_derivative(float y) const;
+    [[nodiscard]] float activate(float x) const;
+    [[nodiscard]] float activate_derivative(float y) const;
 };
 
 #endif

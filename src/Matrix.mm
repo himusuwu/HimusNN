@@ -87,7 +87,7 @@ Matrix Matrix::from_vector(const std::vector<float>& v, bool as_row)
 
 void Matrix::check_index(size_t r, size_t c) const
 {
-    if (r >= rows || c >= cols)
+    if (r >= rows || c >= cols) [[unlikely]]
     {
         throw std::out_of_range("Index out of range.");
     }
@@ -95,7 +95,7 @@ void Matrix::check_index(size_t r, size_t c) const
 
 void Matrix::assert_dims(size_t r, size_t c) const
 {
-    if (r != rows || c != cols)
+    if (r != rows || c != cols) [[unlikely]]
     {
         throw std::invalid_argument("Invalid argument was given.");
     }
@@ -264,7 +264,7 @@ Matrix Matrix::scaled(float scalar) const
 
 Matrix Matrix::matmul(const Matrix& other) const
 {
-    if (cols != other.rows)
+    if (cols != other.rows) [[unlikely]]
     {
         throw std::invalid_argument("Invalid argument for matmul.");
     }
@@ -511,7 +511,7 @@ Matrix Matrix::sum_axis1() const
 
 Matrix Matrix::mean_axis0() const
 {
-    if (rows == 0)
+    if (rows == 0) [[unlikely]]
     {
         throw std::invalid_argument("mean_axis0 on empty matrix.");
     }
@@ -521,7 +521,7 @@ Matrix Matrix::mean_axis0() const
 
 Matrix Matrix::mean_axis1() const
 {
-    if (cols == 0)
+    if (cols == 0) [[unlikely]]
     {
         throw std::invalid_argument("mean_axis1 on empty matrix.");
     }

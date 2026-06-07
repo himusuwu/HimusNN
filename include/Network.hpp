@@ -20,7 +20,7 @@ class Network
         float elu_alpha,
         float huber_delta
     );
-    std::vector<float> predict(const std::vector<float>& inputs);
+    [[nodiscard]] std::vector<float> predict(const std::vector<float>& inputs);
     void train(const std::vector<float>& inputs, const std::vector<float>& targets);
     void trainBatch(
         const std::vector<std::vector<float>>& inputs,

@@ -12,7 +12,7 @@
 class Trainer
 {
   public:
-    Trainer(const Config& config) : timing(config.window_size), progress(config.bar_width, config.use_color) {}
+    explicit Trainer(const Config& config) : timing(config.window_size), progress(config.bar_width, config.use_color) {}
 
     void
     run(Network& net,
