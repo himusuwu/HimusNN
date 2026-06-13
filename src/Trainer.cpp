@@ -7,32 +7,45 @@
 #include <cstddef>
 #include <stdexcept>
 
-void Trainer::run(
-    Network& net,
-    const std::vector<std::vector<float>>& inputs,
-    const std::vector<std::vector<float>>& targets,
-    const std::vector<std::vector<float>>& val_inputs,
-    const std::vector<std::vector<float>>& val_targets,
-    const Config& config
-)
+void Trainer::run(Network& net, const DataSet& train_data, const DataSet& val_data, const Config& config)
 {
+    if (train_data.num_samples == 0) [[unlikely]]
+    {
+        throw std::invalid_argument("Training dataset is empty.");
+    }
+
     for (int epoch = 0; epoch < config.epochs; ++epoch)
     {
         auto start_epoch = std::chrono::steady_clock::now();
 
         size_t batch_size = static_cast<size_t>(config.batch_size);
-        size_t total = inputs.size();
 
         if (batch_size == 0)
         {
             throw std::logic_error("Batch size is 0.");
         }
 
-        for (size_t batch_start = 0; batch_start < total; batch_start += batch_size)
+        for (size_t batch_start = 0; batch_start < train_data.num_samples; batch_start += batch_size)
         {
-            size_t batch_end = std::min(batch_start + batch_size, total);
+            size_t current_batch_size = std::min(batch_size, train_data.num_samples - batch_start);
+            size_t in_start_idx = batch_start * train_data.input_size;
+            size_t in_count = current_batch_size * train_data.input_size;
 
-            net.trainBatch(inputs, targets, batch_start, batch_end, config.beta1, config.beta2);
+            size_t tg_start_idx = batch_start * train_data.target_size;
+            size_t tg_count = current_batch_size * train_data.target_size;
+
+            std::span<const float> in_span(train_data.inputs.data() + in_start_idx, in_count);
+            std::span<const float> tg_span(train_data.targets.data() + tg_start_idx, tg_count);
+
+            net.trainBatch(
+                in_span,
+                tg_span,
+                current_batch_size,
+                train_data.input_size,
+                train_data.target_size,
+                config.beta1,
+                config.beta2
+            );
         }
 
         auto stop_epoch = std::chrono::steady_clock::now();
@@ -48,11 +61,11 @@ void Trainer::run(
 
         if (epoch % config.metric_interval == 0)
         {
-            last_mse = metric.mse(net, inputs, targets);
-            last_acc = metric.accuracy(net, inputs, targets);
+            last_mse = metric.mse(net, train_data);
+            last_acc = metric.accuracy(net, train_data);
 
-            val_mse = metric.mse(net, val_inputs, val_targets);
-            val_acc = metric.accuracy(net, val_inputs, val_targets);
+            val_mse = metric.mse(net, val_data);
+            val_acc = metric.accuracy(net, val_data);
         }
 
         progress.update(epoch, config.epochs, last_mse, last_acc, val_mse, val_acc, last_eta_s, last_epoch_ms);

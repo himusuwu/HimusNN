@@ -1,6 +1,8 @@
 #include "../include/Layer.hpp"
 
+#include "Config.hpp"
 #include "Matrix.hpp"
+#include "util.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -61,6 +63,8 @@ float Layer::activate(float x) const
             return log(1.0f + exp(x));
         case ActivationType::Linear:
             return x;
+        case ActivationType::Softmax:
+            return x; // done in forward function
     }
     return x;
 }
@@ -83,6 +87,8 @@ float Layer::activate_derivative(float y) const
             return 1.0f / (1.0f + exp(-y));
         case ActivationType::Linear:
             return 1.0f;
+        case ActivationType::Softmax:
+            return 1.0f; // done in Network.cpp
     }
     return 1.0f;
 }
@@ -91,20 +97,61 @@ Matrix Layer::forward(const Matrix& X)
 {
     last_input = X;                      // batch x in
 
-    Matrix Z = X.matmul(W.transposed()); // (batch x in) * (in x out) = batch x out
+    Matrix Z = X.matmul(W, false, true); // (batch x in) * (in x out) = batch x out
 
-    // add bias row-wise
-    for (size_t r = 0; r < Z.rows; r++)
+    size_t rows = Z.rows;
+    size_t cols = Z.cols;
+
+    if (activation == ActivationType::Softmax)
     {
-        for (size_t c = 0; c < Z.cols; c++)
-        {
-            Z(r, c) += b(0, c);
-        }
+        paraller_for(
+            size_t(0),
+            rows,
+            [&](size_t r)
+            {
+                float max_val = -1e30f;
+
+                for (size_t c = 0; c < cols; c++)
+                {
+                    Z(r, c) += b(0, c);
+
+                    if (Z(r, c) > max_val)
+                    {
+                        max_val = Z(r, c);
+                    }
+                }
+
+                float sum = 0.0f;
+
+                for (size_t c = 0; c < Z.cols; c++)
+                {
+                    Z(r, c) = exp(Z(r, c) - max_val); // e^(z - max)
+                    sum += Z(r, c);
+                }
+
+                for (size_t c = 0; c < Z.cols; c++)
+                {
+                    Z(r, c) /= (sum + 1e-15f); // Normalization
+                }
+            }
+        );
     }
-
-    for (size_t i = 0; i < Z.data.size(); i++)
+    else
     {
-        Z.data[i] = activate(Z.data[i]);
+        paraller_for(
+            size_t(0),
+            rows,
+            [&](size_t r)
+            {
+                float* row_ptr = &Z.data[r * cols];
+                const float* bias_ptr = b.data.data();
+
+                for (size_t c = 0; c < cols; c++)
+                {
+                    row_ptr[c] = activate(row_ptr[c] + bias_ptr[c]);
+                }
+            }
+        );
     }
 
     last_output = Z;
@@ -116,74 +163,91 @@ Matrix Layer::backward(const Matrix& dA, float learning_rate, float beta1, float
 {
     Matrix dZ(dA.rows, dA.cols);
 
-    for (size_t i = 0; i < dZ.data.size(); i++)
-    {
-        dZ.data[i] = dA.data[i] * activate_derivative(last_output.data[i]);
-    }
+    paraller_for(
+        size_t(0),
+        dZ.rows,
+        [&](size_t r)
+        {
+            for (size_t c = 0; c < dZ.cols; c++)
+            {
+                size_t idx = r * dZ.cols + c;
+                dZ.data[idx] = dA.data[idx] * activate_derivative(last_output.data[idx]);
+            }
+        }
+    );
 
-    grad_W = dZ.transposed().matmul(last_input).scaled(1.0f / static_cast<float>(batch_size));
+    grad_W = dZ.matmul(last_input, true, false).scaled(1.0f / static_cast<float>(batch_size));
     grad_b = dZ.mean_axis0();
 
     t++;
 
-    m_W = m_W.scaled(beta1).add(grad_W.scaled(1.0f - beta1));
-    v_W = v_W.scaled(beta2).add(grad_W.hadamard(grad_W).scaled(1.0f - beta2));
-
-    Matrix m_W_hat = m_W.scaled(1.0f / (1.0f - std::pow(beta1, t)));
-    Matrix v_W_hat = v_W.scaled(1.0f / (1.0f - std::pow(beta2, t)));
-
+    float b1 = beta1;
+    float b2 = beta2;
+    float lr = learning_rate;
+    float b1_t = std::pow(b1, t);
+    float b2_t = pow(b2, t);
     float epsilon = 1e-7f;
 
-    for (size_t i = 0; i < W.data.size(); i++)
-    {
-        W.data[i] += (-learning_rate) * (m_W_hat.data[i] / (std::sqrt(v_W_hat.data[i]) + epsilon));
-    }
+    paraller_for(
+        size_t(0),
+        W.data.size(),
+        [&](size_t i)
+        {
+            m_W.data[i] = b1 * m_W.data[i] + (1.0f - b1) * grad_W.data[i];
+            v_W.data[i] = b2 * v_W.data[i] + (1.0f - b2) * grad_W.data[i] * grad_W.data[i];
 
-    m_b = m_b.scaled(beta1).add(grad_b.scaled(1.0f - beta1));
-    v_b = v_b.scaled(beta2).add(grad_b.hadamard(grad_b).scaled(1.0f - beta2));
-
-    Matrix m_b_hat = m_b.scaled(1.0f / (1.0f - std::pow(beta1, t)));
-    Matrix v_b_hat = v_b.scaled(1.0f / (1.0f - std::pow(beta2, t)));
+            float m_hat = m_W.data[i] / (1.0f - b1_t);
+            float v_hat = v_W.data[i] / (1.0f - b2_t);
+            W.data[i] -= lr * (m_hat / (std::sqrt(v_hat) + epsilon));
+        }
+    );
 
     for (size_t i = 0; i < b.data.size(); i++)
     {
-        b.data[i] += (-learning_rate) * (m_b_hat.data[i] / (std::sqrt(v_b_hat.data[i]) + epsilon));
+        m_b.data[i] = b1 * m_b.data[i] + (1.0f - b1) * grad_b.data[i];
+        v_b.data[i] = b2 * v_b.data[i] + (1.0f - b2) * grad_b.data[i] * grad_b.data[i];
+
+        float m_hat = m_b.data[i] / (1.0f - b1_t);
+        float v_hat = v_b.data[i] / (1.0f - b2_t);
+        b.data[i] -= lr * (m_hat / (std::sqrt(v_hat) + epsilon));
     }
 
-    Matrix dA_prev = dZ.matmul(W);
-
-    return dA_prev;
+    return dZ.matmul(W);
 }
 
 Matrix Layer::backward_from_dZ(const Matrix& dZ, float learning_rate, float beta1, float beta2, size_t batch_size)
 {
-    grad_W = dZ.transposed().matmul(last_input).scaled(1.0f / static_cast<float>(batch_size));
+    grad_W = dZ.matmul(last_input, true, false).scaled(1.0f / static_cast<float>(batch_size));
     grad_b = dZ.mean_axis0();
 
     t++;
 
-    m_W = m_W.scaled(beta1).add(grad_W.scaled(1.0f - beta1));
-    v_W = v_W.scaled(beta2).add(grad_W.hadamard(grad_W).scaled(1.0f - beta2));
-
-    Matrix m_W_hat = m_W.scaled(1.0f / (1.0f - std::pow(beta1, t)));
-    Matrix v_W_hat = v_W.scaled(1.0f / (1.0f - std::pow(beta2, t)));
-
+    float b1_t = std::pow(beta1, t);
+    float b2_t = std::pow(beta2, t);
     float epsilon = 1e-7f;
 
-    for (size_t i = 0; i < W.data.size(); i++)
-    {
-        W.data[i] += (-learning_rate) * (m_W_hat.data[i] / (std::sqrt(v_W_hat.data[i]) + epsilon));
-    }
+    paraller_for(
+        size_t(0),
+        W.data.size(),
+        [&](size_t i)
+        {
+            m_W.data[i] = beta1 * m_W.data[i] + (1.0f - beta1) * grad_W.data[i];
+            v_W.data[i] = beta2 * v_W.data[i] + (1.0f - beta2) * grad_W.data[i] * grad_W.data[i];
 
-    m_b = m_b.scaled(beta1).add(grad_b.scaled(1.0f - beta1));
-    v_b = v_b.scaled(beta2).add(grad_b.hadamard(grad_b).scaled(1.0 - beta2));
-
-    Matrix m_b_hat = m_b.scaled(1.0f / (1.0f - std::pow(beta1, t)));
-    Matrix v_b_hat = v_b.scaled(1.0f / (1.0f - std::pow(beta2, t)));
+            float m_hat = m_W.data[i] / (1.0f - b1_t);
+            float v_hat = v_W.data[i] / (1.0f - b2_t);
+            W.data[i] -= learning_rate * (m_hat / (std::sqrt(v_hat) + epsilon));
+        }
+    );
 
     for (size_t i = 0; i < b.data.size(); i++)
     {
-        b.data[i] += (-learning_rate) * (m_b_hat.data[i] / (std::sqrt(v_b_hat.data[i]) + epsilon));
+        m_b.data[i] = beta1 * m_b.data[i] + (1.0f - beta1) * grad_b.data[i];
+        v_b.data[i] = beta2 * v_b.data[i] + (1.0f - beta2) * grad_b.data[i] * grad_b.data[i];
+
+        float m_hat = m_b.data[i] / (1.0f - b1_t);
+        float v_hat = v_b.data[i] / (1.0f - b2_t);
+        b.data[i] -= learning_rate * (m_hat / (std::sqrt(v_hat) + epsilon));
     }
 
     Matrix dA_prev = dZ.matmul(W);

@@ -1,6 +1,6 @@
+#include <dispatch/dispatch.h>
+#include <vecLib/cblas_new.h>
 #ifdef __APPLE__
-    #define ACCELERATE_NEW_LAPACK
-    #define ACCELERATE_LAPACK_ILP64
     #include <Accelerate/Accelerate.h>
 
     // Metal
@@ -50,6 +50,16 @@ Matrix::Matrix(size_t rows, size_t cols, const std::vector<float>& init_data) : 
     {
         throw std::invalid_argument("Init data size is wrong.");
     }
+}
+
+Matrix::Matrix(size_t rows, size_t cols, std::span<const float> data_span) : rows(rows), cols(cols)
+{
+    if (data_span.size() != rows * cols) [[unlikely]]
+    {
+        throw std::invalid_argument("Span size does not match matrix dimensions.");
+    }
+
+    data.assign(data_span.begin(), data_span.end());
 }
 
 Matrix Matrix::zeros(size_t rows, size_t cols)
@@ -137,10 +147,14 @@ void Matrix::fill(float value)
 
 void Matrix::scale_inplace(float s)
 {
+#ifdef __APPLE__
+    vDSP_vsmul(data.data(), 1, &s, data.data(), 1, data.size());
+#else
     for (float& d : data)
     {
         d *= s;
     }
+#endif
 }
 
 void Matrix::add_inplace(const Matrix& other)
@@ -175,10 +189,14 @@ void Matrix::hadamard_inplace(const Matrix& other)
 {
     assert_dims(other.rows, other.cols);
 
+#ifdef __APPLE__
+    vDSP_vmul(data.data(), 1, other.data.data(), 1, data.data(), 1, data.size());
+#else
     for (size_t i = 0; i < data.size(); i++)
     {
         data[i] *= other.data[i];
     }
+#endif
 }
 
 Matrix Matrix::transposed() const
@@ -262,14 +280,19 @@ Matrix Matrix::scaled(float scalar) const
     return out;
 }
 
-Matrix Matrix::matmul(const Matrix& other) const
+Matrix Matrix::matmul(const Matrix& other, bool transA, bool transB) const
 {
-    if (cols != other.rows) [[unlikely]]
+    size_t realRowsA = transA ? cols : rows;
+    size_t realColsA = transA ? rows : cols;
+    size_t realRowsB = transB ? other.cols : other.rows;
+    size_t realColsB = transB ? other.rows : other.cols;
+
+    if (realColsA != realRowsB) [[unlikely]]
     {
-        throw std::invalid_argument("Invalid argument for matmul.");
+        throw std::invalid_argument("Invalid argument for matmul (dimension mismatch).");
     }
 
-    Matrix out(rows, other.cols, 0.0f);
+    Matrix out(realRowsA, realColsB, 0.0f);
 
 #ifdef __APPLE__
     size_t complexity = rows * cols * other.cols;
@@ -283,21 +306,24 @@ Matrix Matrix::matmul(const Matrix& other) const
             printedCPU = true;
         }
 
+        int lda = transA ? static_cast<int>(realRowsA) : static_cast<int>(realColsA);
+        int ldb = transB ? static_cast<int>(realRowsB) : static_cast<int>(realColsB);
+
         cblas_sgemm(
             CblasRowMajor,
-            CblasNoTrans,
-            CblasNoTrans,
-            static_cast<__LAPACK_int>(rows),
-            static_cast<__LAPACK_int>(other.cols),
-            static_cast<__LAPACK_int>(cols),
+            transA ? CblasTrans : CblasNoTrans,
+            transB ? CblasTrans : CblasNoTrans,
+            static_cast<int>(realRowsA),
+            static_cast<int>(realColsB),
+            static_cast<int>(realColsA),
             1.0f,
             data.data(),
-            static_cast<__LAPACK_int>(cols),
+            lda,
             other.data.data(),
-            static_cast<__LAPACK_int>(other.cols),
+            ldb,
             0.0f,
             out.data.data(),
-            static_cast<__LAPACK_int>(out.cols)
+            static_cast<int>(out.cols)
         );
     }
     else
@@ -354,9 +380,9 @@ Matrix Matrix::matmul(const Matrix& other) const
 
         MPSMatrixDescriptor *descC = [
             MPSMatrixDescriptor 
-            matrixDescriptorWithRows:rows 
-            columns:other.cols 
-            rowBytes:other.cols * sizeof(float) 
+            matrixDescriptorWithRows:realRowsA 
+            columns:realColsB 
+            rowBytes:realColsB * sizeof(float) 
             dataType:MPSDataTypeFloat32
         ];
 
@@ -381,11 +407,11 @@ Matrix Matrix::matmul(const Matrix& other) const
         MPSMatrixMultiplication *mul = [
             [MPSMatrixMultiplication alloc]
             initWithDevice:metalDevice
-            transposeLeft:NO
-            transposeRight:NO
-            resultRows:rows
-            resultColumns:other.cols
-            interiorColumns:cols
+            transposeLeft:(transA ? YES : NO)
+            transposeRight:(transB ? YES : NO)
+            resultRows:realRowsA
+            resultColumns:realColsB
+            interiorColumns:realColsA
             alpha:1.0f
             beta:0.0f
         ];
@@ -533,20 +559,37 @@ Matrix Matrix::apply(float (*f)(float)) const
 {
     Matrix out(rows, cols);
 
+#ifdef __APPLE__
+    float* out_ptr = out.data_ptr();
+    const float* in_ptr = this->data_ptr();
+
+    dispatch_apply(data.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i) {
+        out_ptr[i] = f(in_ptr[i]);
+    });
+#else
     for (size_t i = 0; i < data.size(); i++)
     {
         out.data[i] = f(data[i]);
     }
+#endif
 
     return out;
 }
 
 void Matrix::apply_inplace(float (*f)(float))
 {
+#ifdef __APPLE__
+    float* ptr = this->data_ptr();
+
+    dispatch_apply(data.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i) {
+        ptr[i] = f(ptr[i]);
+    });
+#else
     for (size_t i = 0; i < data.size(); i++)
     {
         data[i] = f(data[i]);
     }
+#endif
 }
 
 Matrix Matrix::outer(const std::vector<float>& a, const std::vector<float>& b)

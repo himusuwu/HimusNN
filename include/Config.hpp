@@ -11,16 +11,18 @@ enum class ActivationType
     LeakyRelu, // LReLu(x) = (x > 0) ? x : ax
     Elu,       // Elu(x) = (x > 0) ? x : a(exp(x) - 1)
     Softplus,  // SPlus(x) = log(1 + exp(x))
-    Linear     // f(x) = x
+    Linear,    // f(x) = x
+    Softmax
 };
 
 enum class LossType
 {
-    MSE,         // Mean Squared Error: L = (t - y)²
-    BCE,         // Binary Cross-Entropy: L = −(tlog(y) + (1 − t)log(1 − y))
-    MAE,         // Mean Absolute Error: L = |t - y|
-    Huber,       // MSE for small errors, MAE for big
-    CrossEntropy // Softmax + CE
+    MSE,          // Mean Squared Error: L = (t - y)²
+    BCE,          // Binary Cross-Entropy: L = −(tlog(y) + (1 − t)log(1 − y))
+    MAE,          // Mean Absolute Error: L = |t - y|
+    Huber,        // MSE for small errors, MAE for big
+    CrossEntropy, // Softmax + CE
+    CCE           // Categorial Cross-Entropy
 };
 
 struct Config

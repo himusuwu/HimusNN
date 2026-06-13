@@ -2,7 +2,12 @@
 #define MATRIX_HPP
 
 #include <cstddef>
+#include <span>
 #include <vector>
+
+#ifdef __APPLE__
+    #include <dispatch/dispatch.h>
+#endif
 
 struct Matrix
 {
@@ -14,6 +19,7 @@ struct Matrix
     Matrix();
     Matrix(size_t rows, size_t cols, float fill = 0.0f);
     Matrix(size_t rows, size_t cols, const std::vector<float>& init_data); // init_data.size() == rows * cols
+    Matrix(size_t rows, size_t cols, std::span<const float> data_span);
     Matrix(const Matrix&) = default;
     Matrix(Matrix&&) noexcept = default;
     Matrix& operator=(const Matrix&) = default;
@@ -46,7 +52,7 @@ struct Matrix
     [[nodiscard]] Matrix sub(const Matrix& other) const;
     [[nodiscard]] Matrix hadamard(const Matrix& other) const;
     [[nodiscard]] Matrix scaled(float s) const;
-    [[nodiscard]] Matrix matmul(const Matrix& other) const; // this * other
+    [[nodiscard]] Matrix matmul(const Matrix& other, bool transA = false, bool transB = false) const; // this * other
 
     // rows / cols
     [[nodiscard]] std::vector<float> row(size_t r) const;
@@ -68,10 +74,19 @@ struct Matrix
     {
         Matrix out(rows, cols);
 
+#ifdef __APPLE__
+        float* out_ptr = out.data_ptr();
+        const float* in_ptr = this->data_ptr();
+
+        dispatch_apply(data.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i) {
+            out_ptr[i] = f(in_ptr[i]);
+        });
+#else
         for (size_t i = 0; i < data.size(); i++)
         {
             out.data[i] = f(data[i]);
         }
+#endif
 
         return out;
     }

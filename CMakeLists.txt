@@ -32,6 +32,11 @@ if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "AppleClang|Clang")
         -mcpu=native
     )
 
+    target_compile_definitions(HimusNN PRIVATE
+        ACCELERATE_NEW_LAPACK
+        ACCELERATE_LAPACK_ILP64
+    )
+
     include(CheckIPOSupported)
     check_ipo_supported(RESULT ipo_supported)
 

@@ -48,8 +48,8 @@ class Layer
     float elu_alpha;
     float huber_delta;
 
-    [[nodiscard]] float activate(float x) const;
-    [[nodiscard]] float activate_derivative(float y) const;
+    [[nodiscard]] inline float activate(float x) const;
+    [[nodiscard]] inline float activate_derivative(float y) const;
 };
 
 #endif

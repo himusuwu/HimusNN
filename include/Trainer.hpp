@@ -2,25 +2,18 @@
 #define TRAINER_HPP
 
 #include "Config.hpp"
+#include "DataSet.hpp"
 #include "Metric.hpp"
 #include "Network.hpp"
 #include "Progress.hpp"
 #include "Timing.hpp"
-
-#include <vector>
 
 class Trainer
 {
   public:
     explicit Trainer(const Config& config) : timing(config.window_size), progress(config.bar_width, config.use_color) {}
 
-    void
-    run(Network& net,
-        const std::vector<std::vector<float>>& inputs,
-        const std::vector<std::vector<float>>& targets,
-        const std::vector<std::vector<float>>& val_inputs,
-        const std::vector<std::vector<float>>& val_targets,
-        const Config& config);
+    void run(Network& net, const DataSet& train_data, const DataSet& val_data, const Config& config);
 
   private:
     Metric metric;

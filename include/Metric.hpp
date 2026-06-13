@@ -1,17 +1,15 @@
 #ifndef METRIC_HPP
 #define METRIC_HPP
 
+#include "DataSet.hpp"
 #include "Network.hpp"
 
 class Metric
 {
   public:
-    [[nodiscard]] float
-    mse(Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets);
+    [[nodiscard]] float mse(Network& net, const DataSet& data);
 
-    [[nodiscard]] float accuracy(
-        Network& net, const std::vector<std::vector<float>>& inputs, const std::vector<std::vector<float>>& targets
-    );
+    [[nodiscard]] float accuracy(Network& net, const DataSet& data);
 
   private:
     float sum_squared_error = 0.0f;

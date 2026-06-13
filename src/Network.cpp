@@ -60,27 +60,38 @@ std::vector<float> Network::predict(const std::vector<float>& inputs)
     return X.row(0);
 }
 
+Matrix Network::predictBatch(const Matrix& batch_inputs)
+{
+    Matrix X = batch_inputs;
+
+    for (Layer& layer : layers)
+    {
+        X = layer.forward(X);
+    }
+
+    return X;
+}
+
 void Network::train(const std::vector<float>& inputs, const std::vector<float>& targets)
 {
     std::vector<std::vector<float>> in{inputs};
     std::vector<std::vector<float>> out{targets};
 
-    trainBatch(in, out, 0, 1, 0.0f, 0.0f);
+    // trainBatch(in, out, 0, 1, 0.0f, 0.0f);
 }
 
 void Network::trainBatch(
-    const std::vector<std::vector<float>>& inputs,
-    const std::vector<std::vector<float>>& targets,
-    size_t batch_start,
-    size_t batch_end,
+    std::span<const float> inputs_flat,
+    std::span<const float> targets_flat,
+    size_t batch_size,
+    size_t input_size,
+    size_t target_size,
     float beta1,
     float beta2
 )
 {
-    size_t batch_size = batch_end - batch_start;
-
-    Matrix X = make_batch_matrix(inputs, batch_start, batch_end);
-    Matrix Y = make_batch_matrix(targets, batch_start, batch_end);
+    Matrix X(batch_size, input_size, inputs_flat);
+    Matrix Y(batch_size, target_size, targets_flat);
 
     Matrix A = X;
 
@@ -89,8 +100,26 @@ void Network::trainBatch(
         A = layer.forward(A);
     }
 
-    // BCE + Sigmoid: dZ = (output - target)
-    Matrix dZ = A.sub(Y);
+    Matrix dZ(batch_size, Y.cols);
+
+    if (loss == LossType::CCE)
+    {
+        for (size_t i = 0; i < A.data.size(); i++)
+        {
+            dZ.data[i] = A.data[i] - Y.data[i];
+        }
+    }
+    else if (loss == LossType::BCE)
+    {
+        for (size_t i = 0; i < A.data.size(); i++)
+        {
+            dZ.data[i] = A.data[i] - Y.data[i];
+        }
+    }
+    else
+    {
+        dZ = A.sub(Y);
+    }
 
     Matrix dA = layers.back().backward_from_dZ(dZ, learning_rate, beta1, beta2, batch_size);
 
