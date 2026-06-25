@@ -141,7 +141,6 @@ SplitData DataLoader::split(const DataSet& data, float val_ratio, unsigned seed)
     result.train.num_samples = train_count;
     result.val.num_samples = val_count;
 
-    // ALOKACJA - naprawiona (dodano dla train)
     result.train.inputs.resize(train_count * data.input_size);
     result.train.targets.resize(train_count * data.target_size);
 

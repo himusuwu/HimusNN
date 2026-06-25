@@ -26,7 +26,7 @@ int main()
         20,
         true,
         0.001,
-        {1024, 512, 26},
+        {256, 128, 26},
         ActivationType::LeakyRelu,
         ActivationType::Softmax,
         LossType::CCE,
